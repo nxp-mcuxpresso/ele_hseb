@@ -8,7 +8,7 @@
 *   @{
 */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -254,7 +254,9 @@ hseSrvResponse_t HSE_Crypto(void)
     }
     #endif
 */
-    ASSERT( (uint8_t)gCryptoServicesStarted == (uint8_t)gCryptoServicesExecuted );
+
+    ASSERT( (uint32_t)gCryptoServicesStarted == (uint32_t)gCryptoServicesExecuted );
+
     testStatus |= CRYPTOGRAPHIC_SERVICES_SUCCESS;
     return srvResponse;
 }

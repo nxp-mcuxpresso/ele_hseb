@@ -6,7 +6,7 @@
     @details     Sample application demonstrating host request SHE commands using MU driver.
 */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -19,6 +19,9 @@ extern "C"
 /*==================================================================================================
                                          INCLUDE FILES
 ==================================================================================================*/
+
+#include <assert.h>
+
 #include "hse_she_api.h"
 #include "hse_interface.h"
 #include "hse_host.h"
@@ -259,8 +262,11 @@ hseSrvResponse_t SysAuthorizationResp(
     pHseSrvDesc->srvId = HSE_SRV_ID_SYS_AUTH_RESP;
     pSysAuthRespSrv->pAuth[0] = (HOST_ADDR)pSign0;
     pSysAuthRespSrv->pAuth[1] = (HOST_ADDR)pSign1;
-    pSysAuthRespSrv->authLen[0] = sign0Length;
-    pSysAuthRespSrv->authLen[1] = sign1Length;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(sign0Length <= UINT16_MAX);
+    pSysAuthRespSrv->authLen[0] = (uint16_t)sign0Length;
+    assert(sign1Length <= UINT16_MAX);
+    pSysAuthRespSrv->authLen[1] = (uint16_t)sign1Length;
 
     return HSE_Send(muIf, muChannelIdx, gSyncTxOption, pHseSrvDesc);
 }
@@ -285,6 +291,8 @@ hseSrvResponse_t Hash_Req(hseAccessMode_t accessMode, hseHashAlgo_t hashAlgo,
 
     pHashSrv->accessMode = accessMode;
     pHashSrv->hashAlgo = hashAlgo;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(streamId <= UINT8_MAX);
     pHashSrv->streamId = streamId;
     pHashSrv->inputLength = inputLength;
     pHashSrv->pInput = (HOST_ADDR)pInput;

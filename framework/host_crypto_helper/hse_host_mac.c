@@ -8,7 +8,7 @@
  *   @{
  */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2018-2021 NXP                                                  */
+/* Copyright 2018-2021, 2026 NXP                                            */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -23,6 +23,7 @@ extern "C"
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
+#include <assert.h>
 
 #include "hse_host.h"
 #include "string.h"
@@ -80,7 +81,9 @@ hseSrvResponse_t MacSignSrv(hseAccessMode_t accessMode, uint32_t streamId,
     pMacSrv = &(pHseSrvDesc->hseSrv.macReq);
 
     pMacSrv->accessMode = accessMode;
-    pMacSrv->streamId = streamId;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(streamId <= UINT8_MAX);
+    pMacSrv->streamId = (uint8_t)streamId;
     pMacSrv->macScheme = macScheme;
     pMacSrv->authDir = HSE_AUTH_DIR_GENERATE;
     pMacSrv->keyHandle = keyHandle;
@@ -106,7 +109,9 @@ hseSrvResponse_t MacVerSrv(hseAccessMode_t accessMode, uint32_t streamId,
     pMacSrv = &(pHseSrvDesc->hseSrv.macReq);
 
     pMacSrv->accessMode     = accessMode;
-    pMacSrv->streamId       = streamId;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(streamId <= UINT8_MAX);
+    pMacSrv->streamId       = (uint8_t)streamId;
     pMacSrv->macScheme      = macScheme;
     pMacSrv->authDir        = HSE_AUTH_DIR_VERIFY;
     pMacSrv->keyHandle      = keyHandle;
@@ -141,7 +146,9 @@ hseSrvResponse_t AesKmCmacGen(uint8_t u8MuInstance, hseKeyHandle_t keyHandle, ui
     pHseSrvDesc->srvId = HSE_SRV_ID_MAC;
 
     pMacSrv->accessMode = accessMode;
-    pMacSrv->streamId = streamId;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(streamId <= UINT8_MAX);
+    pMacSrv->streamId = (uint8_t)streamId;
     pMacSrv->macScheme.macAlgo = HSE_MAC_ALGO_CMAC;
     pMacSrv->macScheme.sch.cmac.cipherAlgo = HSE_CIPHER_ALGO_AES;
     pMacSrv->authDir = HSE_AUTH_DIR_GENERATE;

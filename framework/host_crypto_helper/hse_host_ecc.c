@@ -7,7 +7,7 @@
 *   @{
 */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2018 NXP                                                       */
+/* Copyright 2018, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -21,6 +21,7 @@ extern "C"
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
+#include <assert.h>
 
 #include "hse_default_config.h"
 #include "hse_host.h"
@@ -93,6 +94,8 @@ static hseSrvResponse_t GenerateEccKeyReq
     pGenKeyReq->keyInfo.keyType = keyType;
     pGenKeyReq->keyInfo.keyFlags = keyFlags;
     pGenKeyReq->keyInfo.specific.eccCurveId = eccCurveId;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(keyBitLength <= UINT16_MAX);
     pGenKeyReq->keyInfo.keyBitLen = keyBitLength;
     pGenKeyReq->sch.eccKey.pPubKey = (HOST_ADDR)pPubKey;
     pGenKeyReq->keyGenScheme = HSE_KEY_GEN_ECC_KEY_PAIR;
@@ -193,6 +196,7 @@ hseSrvResponse_t GenerateEccKey(
     hseSrvResponse_t hseSrvResponse = HSE_SRV_RSP_GENERAL_ERROR;
     hseKeyInfo_t lKeyInfo = {0};
     bool_t bEraseKeyBeforeGen = FALSE;
+    uint32_t validatedUsageFlags;
 
     hseSrvResponse = HKF_AllocKeySlot(isNvmKey, WRP_KEY_TYPE_ECC_PAIR, WRP_ECC_KEY_SIZE, pTargetKeyHandle);
     if(HSE_SRV_RSP_OK != hseSrvResponse)
@@ -208,7 +212,10 @@ hseSrvResponse_t GenerateEccKey(
             goto exit;
         }
     }
-    hseSrvResponse = GenerateEccKeyReq(*pTargetKeyHandle, HSE_KEY_TYPE_ECC_PAIR, usageFlags, eccCurveId, KeyBitLen(eccCurveId), NULL);
+    /* INT31-C: Validate before narrowing conversion */
+    validatedUsageFlags = usageFlags;
+    assert(validatedUsageFlags <= UINT16_MAX);
+    hseSrvResponse = GenerateEccKeyReq(*pTargetKeyHandle, HSE_KEY_TYPE_ECC_PAIR, (hseKeyFlags_t)validatedUsageFlags, eccCurveId, KeyBitLen(eccCurveId), NULL);
     if(HSE_SRV_RSP_OK != hseSrvResponse)
     {
         HKF_FreeKeySlot(pTargetKeyHandle);
@@ -225,7 +232,10 @@ hseSrvResponse_t GenerateEccKeyAndExportPublic(
     uint8_t* pPubKey
 )
 {
-    return GenerateEccKeyReq(targetKeyHandle, HSE_KEY_TYPE_ECC_PAIR, usageFlags, eccCurveId, KeyBitLen(eccCurveId), pPubKey);
+    /* INT31-C: Validate before narrowing conversion */
+    uint32_t validatedUsageFlags = usageFlags;
+    assert(validatedUsageFlags <= UINT16_MAX);
+    return GenerateEccKeyReq(targetKeyHandle, HSE_KEY_TYPE_ECC_PAIR, (hseKeyFlags_t)validatedUsageFlags, eccCurveId, KeyBitLen(eccCurveId), pPubKey);
 }
 
 hseSrvResponse_t LoadEccUserCurve(

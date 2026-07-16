@@ -4,10 +4,13 @@
  * @details Contains the API's for demonstrating the use of publish_keystore_RamToFlash_example crypto service in DemoApp
  */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
+
+#include <assert.h>
+
 #include "hse_publish_keystore_RamToFlash_example.h"
 /*==================================================================================================
                                 LOCAL VARIABLE
@@ -62,12 +65,14 @@ static hseSrvResponse_t ImportNVMkeysAPI(void)
     HKF_FreeKeySlot(&aesAuthKeyHandle);
 
     hseKeyHandle_t aesKey2Handle = HSE_DEMO_NVM_AES256_KEY2;
-    srvResponse = LoadAesKey(&aesKey2Handle, NVM_KEY, aesEcbKey2Length, aesEcbKey2);
+    assert(aesEcbKey2Length <= UINT16_MAX); /* INT31-C: Validate key length before narrowing conversion */
+    srvResponse = LoadAesKey(&aesKey2Handle, NVM_KEY, (uint16_t)aesEcbKey2Length, aesEcbKey2);
     ASSERT(HSE_SRV_RSP_OK == srvResponse);
     HKF_FreeKeySlot(&aesKey2Handle);
 
     hseKeyHandle_t aesKey3Handle = HSE_DEMO_NVM_AES256_KEY3;
-    srvResponse = LoadAesKeyWithCipherMode(&aesKey3Handle, NVM_KEY, aesCcmKey3Length, aesCcmKey3, HSE_KU_AES_BLOCK_MODE_CCM);
+    assert(aesCcmKey3Length <= UINT16_MAX); /* INT31-C: Validate key length before narrowing conversion */
+    srvResponse = LoadAesKeyWithCipherMode(&aesKey3Handle, NVM_KEY, (uint16_t)aesCcmKey3Length, aesCcmKey3, HSE_KU_AES_BLOCK_MODE_CCM);
     ASSERT(HSE_SRV_RSP_OK == srvResponse);
     HKF_FreeKeySlot(&aesKey3Handle);
 

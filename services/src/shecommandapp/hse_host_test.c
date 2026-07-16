@@ -8,7 +8,7 @@
 This file contains sample code only. It is not part of the production code deliverables.
 */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -251,7 +251,7 @@ hseSrvResponse_t Test_SHE_LOAD_PLAIN_KEY(void)
     // uint32_t sheLoadPlainKeyResult = 0UL;
     hseSrvResponse_t status;
     hseSrvResponse_t hseResponse;
-    uint32_t resp = 0;
+    int resp = 0; /* INT31-C: Use int type to match memcmp() return type */
     uint8_t ramKey[16] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0A, 0x0B, 0x00C, 0x0D, 0x0E, 0x0F};
     /*
         * the test vectors used for verifying the successful update of the keys

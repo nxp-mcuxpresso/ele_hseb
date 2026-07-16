@@ -1,8 +1,10 @@
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
+#include <assert.h>
+
 #include "hse_hash_example.h"
 /*
  * ============================================================================
@@ -122,6 +124,7 @@ static void HSE_HashRequestCallback(hseSrvResponse_t srvResponse,void* pArg)
 
      /*Log the response*/
     asyncResponses[u8MuInstance][u8MuChannel] = srvResponse;
+    assert(numberOfResponses < UINT32_MAX); /* INT30-C: Prevent unsigned integer overflow */
     numberOfResponses += 1;
 
      /*Check the HSE response*/
@@ -160,6 +163,7 @@ hseSrvResponse_t HSE_HashDataBlocking
 
     pHseSrvDesc->srvId      = HSE_SRV_ID_HASH;
     pHashSrv->accessMode    = accessMode;
+    assert(streamId <= UINT8_MAX); /* INT31-C: Validate before narrowing conversion */
     pHashSrv->streamId      = streamId;
     pHashSrv->hashAlgo      = hashAlgo;
     pHashSrv->inputLength   = inputLength;
@@ -211,6 +215,7 @@ hseSrvResponse_t HSE_HashDataNonBlocking
 
     pHseSrvDesc->srvId      = HSE_SRV_ID_HASH;
     pHashSrv->accessMode    = accessMode;
+    assert(streamId <= UINT8_MAX); /* INT31-C: Validate before narrowing conversion */
     pHashSrv->streamId      = streamId;
     pHashSrv->hashAlgo      = hashAlgo;
     pHashSrv->inputLength   = inputLength;

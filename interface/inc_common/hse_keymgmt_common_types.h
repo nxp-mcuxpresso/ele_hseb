@@ -69,9 +69,9 @@ typedef uint8_t hseKeyCatalogId_t;
                        (((hseKeyHandle_t)((hseKeyGroupIdx_t)(groupIdx))) << 8U) | \
                        (((hseKeyHandle_t)((hseKeySlotIdx_t)(slotIdx)))))
 
-#define GET_CATALOG_ID(keyHandle)     ((hseKeyCatalogId_t)((keyHandle) >> 16U)) /**< @brief Get key catalog Id. */
-#define GET_GROUP_IDX(keyHandle)      ((hseKeyGroupIdx_t)((keyHandle) >> 8U))   /**< @brief Get key group index. */
-#define GET_SLOT_IDX(keyHandle)       ((hseKeySlotIdx_t)(keyHandle))            /**< @brief Get key slot index. */
+#define GET_CATALOG_ID(keyHandle)     ((hseKeyCatalogId_t)(((keyHandle) >> 16U) & 0xFFU)) /**< @brief Get key catalog Id. */
+#define GET_GROUP_IDX(keyHandle)      ((hseKeyGroupIdx_t)(((keyHandle) >> 8U) & 0xFFU))   /**< @brief Get key group index. */
+#define GET_SLOT_IDX(keyHandle)       ((hseKeySlotIdx_t)((keyHandle) & 0xFFU))            /**< @brief Get key slot index. */
 
 #define HSE_INVALID_KEY_HANDLE        ((hseKeyHandle_t)0xFFFFFFFFUL)   /**< @brief HSE invalid key . */
 #define HSE_INVALID_GROUP_IDX         ((hseKeyGroupIdx_t)0xFFU)        /**< @brief HSE invalid key group index. */

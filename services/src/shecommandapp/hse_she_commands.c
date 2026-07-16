@@ -8,7 +8,7 @@
 This file contains sample code only. It is not part of the production code deliverables.
 */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -23,6 +23,8 @@ extern "C"
 /*==================================================================================================
     *                                        INCLUDE FILES
     ==================================================================================================*/
+
+#include <assert.h>
 
 #include "hse_memory_update_protocol.h"
 #include "hse_host_wrappers.h"
@@ -103,6 +105,8 @@ hseSrvResponse_t she_cmd_enc_ecb(
 {
     uint8_t iv[16] = {0U};
     uint32_t KeyHandle = key_id_to_key_handle_table[keyId];
+    /* INT30-C: Prevent unsigned integer overflow in multiplication */
+    assert((num_of_blocks == 0U) || (16U <= UINT32_MAX / num_of_blocks));
     return SymCipherReq(
         HSE_ACCESS_MODE_ONE_PASS,
         HSE_CIPHER_ALGO_AES,
@@ -128,6 +132,8 @@ hseSrvResponse_t she_cmd_dec_ecb(
 {
     uint8_t iv[16] = {0U};
     uint32_t KeyHandle = key_id_to_key_handle_table[keyId];
+    /* INT30-C: Prevent unsigned integer overflow in multiplication */
+    assert((num_of_blocks == 0U) || (16U <= UINT32_MAX / num_of_blocks));
     return SymCipherReq(
         HSE_ACCESS_MODE_ONE_PASS,
         HSE_CIPHER_ALGO_AES,
@@ -154,6 +160,8 @@ hseSrvResponse_t she_cmd_enc_cbc(
 {
     uint32_t KeyHandle = key_id_to_key_handle_table[keyId];
 
+    /* INT30-C: Prevent unsigned integer overflow in multiplication */
+    assert((num_of_blocks == 0U) || (16U <= UINT32_MAX / num_of_blocks));
     return SymCipherReq(
         HSE_ACCESS_MODE_ONE_PASS,
         HSE_CIPHER_ALGO_AES,
@@ -179,6 +187,8 @@ hseSrvResponse_t she_cmd_dec_cbc(
     uint8_t *pOutput)
 {
     uint32_t KeyHandle = key_id_to_key_handle_table[keyId];
+    /* INT30-C: Prevent unsigned integer overflow in multiplication */
+    assert((num_of_blocks == 0U) || (16U <= UINT32_MAX / num_of_blocks));
     return SymCipherReq(
         HSE_ACCESS_MODE_ONE_PASS,
         HSE_CIPHER_ALGO_AES,

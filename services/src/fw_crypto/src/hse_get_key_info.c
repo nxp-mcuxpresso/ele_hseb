@@ -5,10 +5,12 @@
  *        For details of the function refer its declaration in hse_get_key_info.h
  */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
+#include <assert.h>
+
 #include "hse_get_key_info.h"
 /*
  * ============================================================================
@@ -42,6 +44,12 @@ hseSrvResponse_t HSE_Get_Key_Info_Example(void)
     hseKeyHandle_t aesEcbKeyHandle = HSE_DEMO_RAM_AES256_KEY2;
     hseSrvResponse_t srvResponse = HSE_SRV_RSP_GENERAL_ERROR;
     (void) srvResponse;
+
+    /* CERT-C compliance checks for aesEcbKeyLength */
+    /* INT31-C: Validate before narrowing conversion to uint16_t */
+    assert(aesEcbKeyLength <= UINT16_MAX);
+    /* INT30-C: Prevent multiplication overflow in bit length calculation */
+    assert((aesEcbKeyLength == 0UL) || (8UL <= (UINT32_MAX / aesEcbKeyLength)));
 
     srvResponse = ImportPlainSymKeyReq(aesEcbKeyHandle, HSE_KEY_TYPE_AES,
                                       (HSE_KF_USAGE_ENCRYPT) ,  aesEcbKeyLength, aesEcbKey, 1);

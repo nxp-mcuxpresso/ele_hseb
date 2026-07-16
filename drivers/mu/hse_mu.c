@@ -25,6 +25,8 @@ extern "C"
 * 3) internal and external interfaces from this unit
 ==================================================================================================*/
 
+#include <assert.h>
+
 #include "hse_interface.h"
 #include "hse_mu.h"
 
@@ -101,8 +103,11 @@ extern "C"
 uint8_t HSE_MU_GetFreeChannel(uint8_t u8MuInstance)
 {
     uint8_t u8Count;
-    uint8_t u8Index = u8ChannelRef[u8MuInstance] + 1U;
     uint8_t u8Channel = HSE_INVALID_CHANNEL;
+    /* INT31-C: Perform arithmetic in wider type before narrowing */
+    uint32_t temp1 = (uint32_t)u8ChannelRef[u8MuInstance] + 1U;
+    assert(temp1 <= UINT8_MAX);
+    uint8_t u8Index = (uint8_t)temp1;
 
     /* Finds the next FREE service channel within the MU instance */
     /* Skip channel 0 (reserved for administration services) HACK for
@@ -121,7 +126,10 @@ uint8_t HSE_MU_GetFreeChannel(uint8_t u8MuInstance)
         {
             /* Channel FREE - store it and return */
             u8Channel = u8Index;
-            u8ChannelRef[u8MuInstance] = u8Channel - 1U;
+            /* INT31-C: Perform arithmetic in wider type before narrowing */
+            uint32_t temp2 = (uint32_t)u8Channel - 1U;
+            assert(temp2 <= UINT8_MAX);
+            u8ChannelRef[u8MuInstance] = (uint8_t)temp2;
             break;
         }
     }

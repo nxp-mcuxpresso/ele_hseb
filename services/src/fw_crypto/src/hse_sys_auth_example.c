@@ -4,10 +4,13 @@
  * @details Contains the API's for demonstrating the use of SYS_AUTH services in demo APP
  */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
+
+#include <assert.h>
+
 #include "hse_sys_auth_example.h"
 /*
  * ============================================================================
@@ -164,6 +167,8 @@ exit:
         goto exit;
     }
 
+    /* INT31-C: Validate before passing to function expecting uint16_t */
+    assert(signLen0 <= UINT16_MAX);
     /* Send the authorization response */
     hseResponse = HSE_SysAuthorizationResp(sign0, NULL, signLen0, 0UL);
     if(HSE_SRV_RSP_OK != hseResponse)

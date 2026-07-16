@@ -5,10 +5,12 @@
  * @details Contains the API's for demonstrating the use of AES crypto service in DemoApp
  */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
+#include <assert.h>
+
 #include "hse_aes_example.h"
 
 
@@ -59,6 +61,8 @@ hseSrvResponse_t HSE_Aes_Example(void)
     hseSrvResponse_t srvResponse = HSE_SRV_RSP_GENERAL_ERROR;
 
     /* import keys for AES operation before calling HSE_Aes_Example fn*/
+    /* INT31-C: Validate before narrowing conversion */
+    assert(aesEcbKeyLength <= UINT16_MAX);
     srvResponse = ImportPlainSymKeyReq(
             aesEcbKeyHandle ,
             HSE_KEY_TYPE_AES,
@@ -109,8 +113,10 @@ hseSrvResponse_t HSE_Aes_Example(void)
     NUM_OF_ELEMS(aesEcbPlaintext)*8U, aesEcbPlaintext, (16U*8U), testoutput);
 
 
+    /* INT30-C: Prevent unsigned integer overflow in addition */
+    assert(TotalFastCmacGenerateTime <= (UINT32_MAX - (FastCmacGenerateTime/48U)));
     /* calculate time when STM is derived from PLL of frequency 48MHz */
-    TotalFastCmacGenerateTime += (FastCmacGenerateTime/48);
+    TotalFastCmacGenerateTime += (FastCmacGenerateTime/48U);
     if(HSE_SRV_RSP_OK != srvResponse)
     goto exit;
 

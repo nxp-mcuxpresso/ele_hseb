@@ -7,7 +7,7 @@
 *   @{
 */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2018 NXP                                                       */
+/* Copyright 2018, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -25,6 +25,8 @@ extern "C"{
 #ifndef HSE_SPT_MONOTONIC_COUNTERS
 #define HSE_SPT_MONOTONIC_COUNTERS
 #endif
+
+#include <assert.h>
 
 #include "hse_host.h"
 #include "hse_interface.h"
@@ -71,7 +73,7 @@ static const uint8_t u8MuChInd = 1U;
  *  @brief  Config counters
  */
 hseSrvResponse_t ConfigCounterReq(uint32_t ind, uint32_t rpBitSize)
-{    
+{
     hseSrvDescriptor_t *pHseSrvDesc = &gHseSrvDesc[u8MuInstance][u8MuChInd];
     hseConfigSecCounterSrv_t *pConfigSecCounter = &(pHseSrvDesc->hseSrv.configSecCounter);
 
@@ -80,7 +82,9 @@ hseSrvResponse_t ConfigCounterReq(uint32_t ind, uint32_t rpBitSize)
 
     pHseSrvDesc->srvId = HSE_SRV_ID_CONFIG_COUNTER;
     pConfigSecCounter->counterIndex = ind;
-    pConfigSecCounter->RPBitSize = rpBitSize;
+    /* INT31-C: Validate before narrowing conversion to uint8_t */
+    assert(rpBitSize <= UINT8_MAX);
+    pConfigSecCounter->RPBitSize = (uint8_t)rpBitSize;
 
     return HSE_Send(u8MuInstance, u8MuChInd, gSyncTxOption, pHseSrvDesc);
 }

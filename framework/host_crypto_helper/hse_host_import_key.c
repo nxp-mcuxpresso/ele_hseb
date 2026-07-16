@@ -1,5 +1,5 @@
 /*--------------------------------------------------------------------------*/
-/* Copyright 2025 NXP                                                       */
+/* Copyright 2025-2026 NXP                                                  */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -12,6 +12,7 @@ extern "C"
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
+#include <assert.h>
 
 #include "hse_host.h"
 #include "hse_host_import_key.h"
@@ -246,6 +247,7 @@ static void SetupAuthRawKey(hseKeyImportParams_t *pImportKeyParams)
             offset += pImportKeyParams->pKey->keyValue.keyLen2;
         }
         pImportKeyParams->authParams.pKeyContainer = keyContainer;
+        assert(offset <= UINT16_MAX); /* INT31-C: Validate before narrowing conversion */
         pImportKeyParams->authParams.keyContainerLength = offset;
     }
 }
@@ -507,7 +509,10 @@ hseSrvResponse_t ExportKeyReqMuChannel(uint8_t muInstance, uint8_t muChannel, hs
             pExportKeyParams->cipherParams.pCipherScheme->aeadCipher.aadLength += sizeof(hseKeyInfo_t);
         }
 
-        memcpy(&pExportKeyReq->cipher.cipherScheme, pExportKeyParams->cipherParams.pCipherScheme, sizeof(hseCipherScheme_t));
+        /* EXP34-C: Check for null pointer before memcpy */
+        if (pExportKeyParams->cipherParams.pCipherScheme != NULL) {
+            memcpy(&pExportKeyReq->cipher.cipherScheme, pExportKeyParams->cipherParams.pCipherScheme, sizeof(hseCipherScheme_t));
+        }
     }
     else
     {
@@ -692,6 +697,7 @@ hseSrvResponse_t ImportPlainSymKeyReqMuChannel(uint8_t u8MuInstance, uint8_t u8M
     hseSrvDescriptor_t* pHseSrvDesc = &gHseSrvDesc[u8MuInstance][u8MuChannel];
     hseImportKeySrv_t *pImportKeyReq = &pHseSrvDesc->hseSrv.importKeyReq;
     hseSrvResponse_t hseResponse;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
 
     if(bEraseKeyBeforeImport)
     {
@@ -704,10 +710,11 @@ hseSrvResponse_t ImportPlainSymKeyReqMuChannel(uint8_t u8MuInstance, uint8_t u8M
 
     memset(pHseSrvDesc, 0, sizeof(hseSrvDescriptor_t));
     memset(&keyInfo, 0, sizeof(hseKeyInfo_t));
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
     keyInfo.keyType = keyType;
     keyInfo.keyFlags = keyFlags;
     keyInfo.smrFlags = smrFlags;
-    keyInfo.keyBitLen = (keyByteLength * 8);
+    keyInfo.keyBitLen = (uint16_t)keyBitLen;
     keyInfo.keyCounter  = (HSE_KEY_CATALOG_ID_NVM == GET_CATALOG_ID(targetKeyHandle)) ? (++gKeySecCount) : 0UL;
     if(HSE_KEY_TYPE_AES == keyType)
     {
@@ -1012,11 +1019,13 @@ hseSrvResponse_t ImportEncryptedSymKeyReq(hseKeyHandle_t cipherKeyHandle, hseCip
     #if defined(HSE_SPT_IMPORT_KEY)
     hseSrvDescriptor_t* pHseSrvDesc = &gHseSrvDesc[muIf][muChannelIdx];
     hseImportKeySrv_t *pImportKeyReq = &pHseSrvDesc->hseSrv.importKeyReq;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
     memset(pHseSrvDesc, 0, sizeof(hseSrvDescriptor_t));
     memset(&keyInfo, 0, sizeof(hseKeyInfo_t));
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
     keyInfo.keyType = keyType;
     keyInfo.keyFlags = keyFlags;
-    keyInfo.keyBitLen = (keyByteLength * 8);
+    keyInfo.keyBitLen = (uint16_t)keyBitLen;
     keyInfo.keyCounter  = (HSE_KEY_CATALOG_ID_NVM == GET_CATALOG_ID(targetKeyHandle)) ? (++gKeySecCount) : 0UL;
 
     pHseSrvDesc->srvId = HSE_SRV_ID_IMPORT_KEY;
@@ -1054,11 +1063,13 @@ hseSrvResponse_t ImportEncryptedRsaKeyReq(hseKeyHandle_t cipherKeyHandle, hseCip
     #if defined(HSE_SPT_IMPORT_KEY)
     hseSrvDescriptor_t* pHseSrvDesc = &gHseSrvDesc[muIf][muChannelIdx];
     hseImportKeySrv_t *pImportKeyReq = &pHseSrvDesc->hseSrv.importKeyReq;
+    uint32_t keyBitLen = BYTES_TO_BITS(modulusLength); /* INT31-C: Calculate in wider type */
     memset(pHseSrvDesc, 0, sizeof(hseSrvDescriptor_t));
     memset(&keyInfo, 0, sizeof(hseKeyInfo_t));
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
     keyInfo.keyType = keyType;
     keyInfo.keyFlags = keyFlags;
-    keyInfo.keyBitLen = (modulusLength * 8);
+    keyInfo.keyBitLen = (uint16_t)keyBitLen;
     keyInfo.keyCounter  = (HSE_KEY_CATALOG_ID_NVM == GET_CATALOG_ID(targetKeyHandle)) ? (++gKeySecCount) : 0UL;
 
     pHseSrvDesc->srvId = HSE_SRV_ID_IMPORT_KEY;
@@ -1161,6 +1172,7 @@ hseSrvResponse_t ImportAuthSymKeyReq(hseKeyHandle_t authKeyHandle, hseAuthScheme
     #if defined(HSE_SPT_IMPORT_KEY)
     hseSrvDescriptor_t* pHseSrvDesc = &gHseSrvDesc[muIf][muChannelIdx];
     hseImportKeySrv_t*  pImportKeyReq;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
 
     memset(pHseSrvDesc, 0, sizeof(hseSrvDescriptor_t));
 
@@ -1174,9 +1186,10 @@ hseSrvResponse_t ImportAuthSymKeyReq(hseKeyHandle_t authKeyHandle, hseAuthScheme
     pImportKeyReq->keyContainer.pAuth[1] = (HOST_ADDR)pSign1;
 
     pImportKeyReq->targetKeyHandle = targetKeyHandle;
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
     keyInfo.keyType = keyType;
     keyInfo.keyFlags = keyFlags;
-    keyInfo.keyBitLen = (keyByteLength * 8);
+    keyInfo.keyBitLen = (uint16_t)keyBitLen;
     keyInfo.keyCounter  = (HSE_KEY_CATALOG_ID_NVM == GET_CATALOG_ID(targetKeyHandle)) ? (++gKeySecCount) : 0UL;
     pImportKeyReq->pKeyInfo = (HOST_ADDR)&keyInfo;
     pImportKeyReq->pKey[2] = (HOST_ADDR)pKey;
@@ -1274,6 +1287,7 @@ hseSrvResponse_t ImportAuthEncSymKeyReq
     #if defined(HSE_SPT_IMPORT_KEY)
     hseSrvDescriptor_t* pHseSrvDesc = &gHseSrvDesc[muIf][muChannelIdx];
     hseImportKeySrv_t*  pImportKeyReq;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
 
     memset(pHseSrvDesc, 0, sizeof(hseSrvDescriptor_t));
 
@@ -1293,9 +1307,10 @@ hseSrvResponse_t ImportAuthEncSymKeyReq
     pImportKeyReq->keyContainer.keyContainerLen = authContainerLen;
 
     pImportKeyReq->targetKeyHandle = targetKeyHandle;
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
     keyInfo.keyType = keyType;
     keyInfo.keyFlags = keyFlags;
-    keyInfo.keyBitLen = (keyByteLength * 8);
+    keyInfo.keyBitLen = (uint16_t)keyBitLen;
     keyInfo.keyCounter  = (HSE_KEY_CATALOG_ID_NVM == GET_CATALOG_ID(targetKeyHandle)) ? (++gKeySecCount) : 0UL;
     pImportKeyReq->pKeyInfo = (HOST_ADDR)&keyInfo;
     pImportKeyReq->pKey[2] = (HOST_ADDR)pEncKey;
@@ -1686,8 +1701,10 @@ hseSrvResponse_t LoadHmacKey(hseKeyHandle_t *pTargetKeyHandle, bool_t isNvmKey, 
                              const uint8_t* pKey)
 {
     hseSrvResponse_t hseResponse = HSE_SRV_RSP_GENERAL_ERROR;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
 
-    hseResponse = HKF_AllocKeySlot(isNvmKey, HSE_KEY_TYPE_HMAC, keyByteLength * 8U, pTargetKeyHandle);
+    hseResponse = HKF_AllocKeySlot(isNvmKey, HSE_KEY_TYPE_HMAC, (uint16_t)keyBitLen, pTargetKeyHandle);
     if(HSE_SRV_RSP_OK != hseResponse)
     {
         goto exit;
@@ -1708,8 +1725,10 @@ hseSrvResponse_t LoadSipHashKey(hseKeyHandle_t *pTargetKeyHandle, bool_t isNvmKe
                                 const uint8_t* pKey)
 {
     hseSrvResponse_t hseResponse = HSE_SRV_RSP_GENERAL_ERROR;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
 
-    hseResponse = HKF_AllocKeySlot(isNvmKey, HSE_KEY_TYPE_SIPHASH, keyByteLength * 8U, pTargetKeyHandle);
+    hseResponse = HKF_AllocKeySlot(isNvmKey, HSE_KEY_TYPE_SIPHASH, keyBitLen, pTargetKeyHandle);
     if(HSE_SRV_RSP_OK != hseResponse)
     {
         goto exit;
@@ -1806,8 +1825,10 @@ hseSrvResponse_t LoadSmrHmacKey(hseKeyHandle_t* pTargetKeyHandle, bool_t isNvmKe
                              uint16_t keyByteLength, const uint8_t* pKey)
 {
     hseSrvResponse_t hseResponse = HSE_SRV_RSP_GENERAL_ERROR;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
 
-    hseResponse = HKF_AllocKeySlot(isNvmKey, HSE_KEY_TYPE_HMAC, keyByteLength * 8U, pTargetKeyHandle);
+    hseResponse = HKF_AllocKeySlot(isNvmKey, HSE_KEY_TYPE_HMAC, keyBitLen, pTargetKeyHandle);
     if(HSE_SRV_RSP_OK != hseResponse)
     {
         goto exit;
@@ -1827,8 +1848,10 @@ hseSrvResponse_t LoadSmrAuthSymKey(hseKeyHandle_t* pTargetKeyHandle, bool_t isNv
                             uint16_t keyByteLength, const uint8_t* pKey)
 {
     hseSrvResponse_t hseResponse = HSE_SRV_RSP_GENERAL_ERROR;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
 
-    hseResponse = HKF_AllocKeySlot(isNvmKey, keyType, keyByteLength * 8U, pTargetKeyHandle);
+    hseResponse = HKF_AllocKeySlot(isNvmKey, keyType, keyBitLen, pTargetKeyHandle);
     if(HSE_SRV_RSP_OK != hseResponse)
     {
         goto exit;
@@ -1847,8 +1870,10 @@ hseSrvResponse_t LoadSmrDecKey(hseKeyHandle_t* pTargetKeyHandle, bool_t isNvmKey
                             uint16_t keyByteLength, const uint8_t* pKey)
 {
     hseSrvResponse_t hseResponse = HSE_SRV_RSP_GENERAL_ERROR;
+    uint32_t keyBitLen = BYTES_TO_BITS(keyByteLength); /* INT31-C: Calculate in wider type */
+    assert(keyBitLen <= UINT16_MAX); /* INT31-C: Validate before narrowing */
 
-    hseResponse = HKF_AllocKeySlot(isNvmKey, HSE_KEY_TYPE_AES, keyByteLength * 8U, pTargetKeyHandle);
+    hseResponse = HKF_AllocKeySlot(isNvmKey, HSE_KEY_TYPE_AES, keyBitLen, pTargetKeyHandle);
     if(HSE_SRV_RSP_OK != hseResponse)
     {
         goto exit;
@@ -2305,6 +2330,7 @@ hseSrvResponse_t VerifySHA(const uint8_t* pKey, hseKeyHandle_t* pKeyHandle)
     pVerifyKey = &pHseSrvDesc->hseSrv.verifyKeyReq;
     pVerifyKey->keyVerAlgo = HSE_KEY_VER_SHA256;
     pVerifyKey->keyHandle  = (*pKeyHandle);
+    assert(hashLength <= UINT8_MAX); /* INT31-C: Validate before narrowing conversion */
     pVerifyKey->tagLen     = (uint8_t)hashLength;
     pVerifyKey->pTag       = (HOST_ADDR)hashStore;
     pVerifyKey->cmackeyHandle = 0U; /* Not used in SHA256 algo*/

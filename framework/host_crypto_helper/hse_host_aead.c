@@ -7,7 +7,7 @@
 *   @{
 */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2018-2021 NXP                                                  */
+/* Copyright 2018-2021, 2026 NXP                                            */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -21,6 +21,7 @@ extern "C"
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
+#include <assert.h>
 
 #include "hse_host.h"
 #include "string.h"
@@ -133,6 +134,7 @@ static hseSrvResponse_t AeadReq(
     pAeadSrv = &(pHseSrvDesc->hseSrv.aeadReq);
 
     pAeadSrv->accessMode = accessMode;
+    assert(streamId <= UINT8_MAX); /* INT31-C: Validate before narrowing conversion */
     pAeadSrv->streamId = streamId;
     pAeadSrv->authCipherMode = authCipherMode;
     pAeadSrv->cipherDir = cipherDir;

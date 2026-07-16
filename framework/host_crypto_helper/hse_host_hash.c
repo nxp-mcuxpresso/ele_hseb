@@ -11,6 +11,7 @@ extern "C"{
 /*==================================================================================================
 *                                        INCLUDE FILES
 ==================================================================================================*/
+#include <assert.h>
 
 #include "hse_host.h"
 #include "hse_keys_allocator.h"
@@ -79,7 +80,9 @@ hseSrvResponse_t HashReq(hseAccessMode_t accessMode, const uint8_t muIf,
 
     pHashSrv->accessMode    = accessMode;
     pHashSrv->hashAlgo      = hashAlgo;
-    pHashSrv->streamId      = streamId;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(streamId <= UINT8_MAX);
+    pHashSrv->streamId      = (uint8_t)streamId;
     pHashSrv->inputLength   = inputLength;
     pHashSrv->pInput        = (HOST_ADDR)pInput;
     pHashSrv->pHashLength   = (HOST_ADDR)pHashLength;

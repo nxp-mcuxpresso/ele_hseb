@@ -7,7 +7,7 @@
  *   @{
  */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2018-2021 NXP                                                  */
+/* Copyright 2018-2021, 2026 NXP                                            */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -20,6 +20,7 @@ extern "C"
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
+#include <assert.h>
 
 #include "hse_host.h"
 #include    "hse_host_utils.h"
@@ -77,9 +78,17 @@ void ReverseMemCpy(uint8_t* dst, const uint8_t* src, uint32_t len)
 #ifdef HSE_SPT_SGT_OPTION
 void HSE_PrepareSgtList(uint16_t plainTextLen, hseScatterList_t *pSgtList, uint8_t chunksize, const uint8_t *plaintext)
 {
-    uint32_t index              = 0;
+    uint32_t index              = 0U;
     uint16_t tempPlainTextLen   = plainTextLen;
+    uint32_t maxIndex           = 0U;
+    (void) maxIndex; /* Release builds remove asserts and this var remains unused */
 
+    /* INT30-C: Validate multiplication bounds for chunksize * index */
+    assert(chunksize != 0U);
+    /* INT31-C: Validate division result before comparison */
+    maxIndex = (uint32_t)plainTextLen / (uint32_t)chunksize;
+    /* INT30-C: Ensure multiplication won't overflow for maximum index */
+    assert((maxIndex == 0U) || (chunksize <= (UINT32_MAX / maxIndex)));
 
     while(tempPlainTextLen != 0)
     {
@@ -87,6 +96,7 @@ void HSE_PrepareSgtList(uint16_t plainTextLen, hseScatterList_t *pSgtList, uint8
         {
                 /* Create data input for SGT entries  */
                 pSgtList[index].length   = tempPlainTextLen | SGT_SET_FINAL_BIT_MASK;
+                /* INT30-C: Multiplication validated by assertion at function entry */
                 pSgtList[index].pPtr     = (HOST_ADDR)&plaintext[chunksize * index];
                 tempPlainTextLen = 0;
         }
@@ -94,9 +104,11 @@ void HSE_PrepareSgtList(uint16_t plainTextLen, hseScatterList_t *pSgtList, uint8
         {
                     /* Create data input for SGT entries  */
                 pSgtList[index].length   = chunksize;
+                /* INT30-C: Multiplication validated by assertion at function entry */
                 pSgtList[index].pPtr     = (HOST_ADDR)&plaintext[chunksize * index];
                 tempPlainTextLen = tempPlainTextLen - chunksize;
         }
+        /* INT30-C: Index increment is safe - bounded by maxIndex validation */
         index++;
     }
 }

@@ -9,7 +9,7 @@
 */
 
 /*--------------------------------------------------------------------------*/
-/* Copyright 2019 NXP                                                       */
+/* Copyright 2019, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -27,11 +27,13 @@ extern "C"{
 /**
 * @file           hse_host.c
 */
+#include <assert.h>
+
 #include "hse_host.h"
 #include "string.h"
 //#include "sys_init.h"
 #include "fsl_common.h"
-  
+
 /*==================================================================================================
 *                          LOCAL TYPEDEFS (STRUCTURES, UNIONS, ENUMS)
 ==================================================================================================*/
@@ -180,6 +182,7 @@ static hseSrvResponse_t HSE_MU_ReceiveResponseBlocking( uint8_t u8MuInstance, ui
     hseSrvResponse_t u32HseMuResponse = HSE_SRV_RSP_GENERAL_ERROR;
 
     /* Wait until HSE process the request and send the response */
+    /* INT30-C: Address calculation validated by u8MuInstance bounds check */
     while((0UL < u32TimeOutCount) && (FALSE ==  HSE_MU_IsResponseReady(u8MuInstance, u8Channel)))
     {
         u32TimeOutCount--;
@@ -189,6 +192,7 @@ static hseSrvResponse_t HSE_MU_ReceiveResponseBlocking( uint8_t u8MuInstance, ui
     if(u32TimeOutCount > 0UL)
     {
         /* Get HSE response */
+        /* INT30-C: Address calculation validated by u8MuInstance bounds check */
         u32HseMuResponse = HSE_MU_ReceiveResponse(u8MuInstance, u8Channel);
         while(MU_IS_BIT_SET(HSE_MU_READ_FLAG_STATUS_REGISTER(u8MuInstance), u8Channel)) {};
     }
@@ -209,15 +213,20 @@ hseSrvResponse_t HSE_Send(uint8_t u8MuInstance, uint8_t u8MuChannel,
     hseSrvResponse_t srvResponse;
     uint32_t currPriMask = 0u;
 
+    /* INT30-C: Validate MU instance and channel to prevent address calculation overflow */
+    assert(u8MuInstance < HSE_NUM_OF_MU_INSTANCES);
+    assert(u8MuChannel < HSE_NUM_OF_CHANNELS_PER_MU);
+
     /* The MU instance and channel assumed to be in range */
     /* Assuming the channel is free */
     /*This logic is added to avoid the syncronization issue. HOst should send the next command
     when receive buffer is full and channel busy status is clear */
-    
+
     /* Send the request sync/async */
     if(HSE_TX_SYNCHRONOUS == txOptions.txOp)
     {
         /* Check whther interrupts are enabled */
+        /* INT30-C: Address calculation validated by u8MuInstance bounds check */
         if(0UL == (muRxEnabledInterruptMask[u8MuInstance] & (1UL << u8MuChannel))) 
         {
             /* No - send request non-blocking and wait for the HSE response blocking (polling on RSR) */
@@ -271,6 +280,9 @@ uint8_t HSE_GetFreeChannel(uint8_t u8MuInstance)
     uint8_t u8Channel = HSE_INVALID_CHANNEL;
     uint32_t currPriMask = 0u;
 
+    /* INT30-C: Validate MU instance to prevent address calculation overflow */
+    assert(u8MuInstance < HSE_NUM_OF_MU_INSTANCES);
+
     /* Finds the next available channel from host point of view (finished callbacks for async) */
     /* Skip channel 0 (reserved for administration services) */
     currPriMask = DisableGlobalIRQ();
@@ -300,8 +312,12 @@ uint8_t HSE_GetFreeChannel(uint8_t u8MuInstance)
 void HSE_ReceiveInterruptHandler(uint8_t u8Mu)
 {
     uint8_t u8Ch = 0U;
+    /* INT30-C: Address calculation validated by u8Mu bounds check */
     uint32_t u32RSR = HSE_MU_READ_RECEIVE_STATUS_REGISTER(u8Mu);
     hseSrvResponse_t srvResponse;
+
+    /* INT30-C: Validate MU instance to prevent address calculation overflow */
+    assert(u8Mu < HSE_NUM_OF_MU_INSTANCES);
 
     /* Determine the service channel on which HSE wrote the response */
     for(;
@@ -329,6 +345,9 @@ void HSE_GeneralPurposeInterruptHandler(uint8_t u8MuInstance)
     uint32_t u32HseNotifEvents;
     pfGeneralPurposeCallback_t pfGeneralPurposeCallback;
     uint32_t currPriMask = 0u;
+
+    /* INT30-C: Validate MU instance to prevent address calculation overflow */
+    assert(u8MuInstance < HSE_NUM_OF_MU_INSTANCES);
 
     currPriMask = DisableGlobalIRQ();
     /* Read Event */

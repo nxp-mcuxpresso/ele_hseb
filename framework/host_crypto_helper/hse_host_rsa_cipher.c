@@ -7,7 +7,7 @@
 *   @{
 */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2018 NXP                                                       */
+/* Copyright 2018, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -21,6 +21,7 @@ extern "C"
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
+#include <assert.h>
 
 #include "hse_host.h"
 #include "string.h"
@@ -130,6 +131,9 @@ hseSrvResponse_t GenerateRsaKeyPair(hseKeyHandle_t* pTargetKeyHandle, uint8_t is
     hseSrvDescriptor_t* pHseSrvDesc = &gHseSrvDesc[muIf][muChannelIdx];
     hseKeyGenerateSrv_t* pKeyGenSrv = &(pHseSrvDesc->hseSrv.keyGenReq);
     hseKeyInfo_t lKeyInfo = {0};
+
+    /* INT31-C: Validate keyBitLength before narrowing conversion */
+    assert(keyBitLength <= UINT16_MAX);
 
     status = HKF_AllocKeySlot(NVM_KEY, HSE_KEY_TYPE_RSA_PAIR, keyBitLength, pTargetKeyHandle);
     if(HSE_SRV_RSP_OK != status)

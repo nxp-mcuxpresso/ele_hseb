@@ -8,7 +8,7 @@
  *   @{
  */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2022 NXP                                                       */
+/* Copyright 2022, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -320,7 +320,10 @@ hseSrvResponse_t ImportSymmetricKeys(void)
     if (HSE_SRV_RSP_KEY_EMPTY == srvResponse)
     {
         /* load AES keys for FAST CMAC operation */
-        srvResponse = LoadAesKey(&AesNVMKeyHandle, 1U, aesEcbKeyLength, aesEcbKey);
+        /* INT31-C: Validate before narrowing conversion */
+        assert(aesEcbKeyLength <= UINT16_MAX);
+        srvResponse = LoadAesKey(&AesNVMKeyHandle, 1U, (uint16_t)aesEcbKeyLength, aesEcbKey);
+
         if (HSE_SRV_RSP_OK != srvResponse)
         {
             goto exit;
@@ -355,8 +358,10 @@ hseSrvResponse_t ImportSymmetricKeys(void)
     if (HSE_SRV_RSP_KEY_EMPTY == srvResponse)
     {
         /* import keys before calling HSE_UpdateNvmKey_Example fn */
+        /* INT31-C: Validate before narrowing conversion */
+        assert(hmacKeyInitialLength <= UINT16_MAX);
         srvResponse = ImportPlainSymKeyReq(hmacNVMKeyHandle0, HSE_KEY_TYPE_HMAC,
-                                            HSE_KF_USAGE_SIGN | HSE_KF_USAGE_VERIFY, hmacKeyInitialLength, hmacKeyInitial, 0U);
+                                            HSE_KF_USAGE_SIGN | HSE_KF_USAGE_VERIFY, (uint16_t)hmacKeyInitialLength, hmacKeyInitial, 0U);
         if (HSE_SRV_RSP_OK != srvResponse)
         {
             goto exit;
@@ -372,8 +377,10 @@ hseSrvResponse_t ImportSymmetricKeys(void)
 
     if (HSE_SRV_RSP_KEY_EMPTY == srvResponse)
     {
+        /* INT31-C: Validate before narrowing conversion */
+        assert(hmacKeyInitialLength <= UINT16_MAX);
         srvResponse = ImportPlainSymKeyReq(hmacNVMKeyHandle1, HSE_KEY_TYPE_HMAC,
-                                            HSE_KF_USAGE_VERIFY, hmacKeyInitialLength, hmacKeyInitial, 0U);
+                                            HSE_KF_USAGE_VERIFY, (uint16_t)hmacKeyInitialLength, hmacKeyInitial, 0U);
         if (HSE_SRV_RSP_OK != srvResponse)
         {
             goto exit;
@@ -403,6 +410,8 @@ hseSrvResponse_t ImportSymmetricKeys(void)
     if (HSE_SRV_RSP_KEY_EMPTY == srvResponse)
     {
         /* load keys for Advanced secure boot */
+        /* INT31-C: Validate before narrowing conversion */
+        assert(aesEcbKeyLength <= UINT16_MAX);
         srvResponse = ImportPlainSymKeyReqMuChannel(
             MU0,
             1U,
@@ -410,7 +419,7 @@ hseSrvResponse_t ImportSymmetricKeys(void)
             HSE_KEY_TYPE_AES,
             (HSE_KF_USAGE_SIGN | HSE_KF_USAGE_VERIFY),
             0U,
-            aesEcbKeyLength,
+            (uint16_t)aesEcbKeyLength,
             aesEcbKey,
             TRUE,
             0U);
@@ -430,6 +439,8 @@ hseSrvResponse_t ImportSymmetricKeys(void)
     if (HSE_SRV_RSP_KEY_EMPTY == srvResponse)
     {
         /*Import key linked with SMR#0*/
+        /* INT31-C: Validate before narrowing conversion */
+        assert(aesEcbKeyLength <= UINT16_MAX);
         srvResponse = ImportPlainSymKeyReqMuChannel(
             MU0,
             1U,
@@ -437,7 +448,7 @@ hseSrvResponse_t ImportSymmetricKeys(void)
             HSE_KEY_TYPE_AES,
             HSE_KF_USAGE_VERIFY,
             0U,
-            aesEcbKeyLength,
+            (uint16_t)aesEcbKeyLength,
             aesEcbKey,
             TRUE,
             0);

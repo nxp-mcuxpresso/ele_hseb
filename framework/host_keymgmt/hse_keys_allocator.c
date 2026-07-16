@@ -8,7 +8,7 @@
  *   @{
  */
 /*--------------------------------------------------------------------------*/
-/* Copyright 2020 NXP                                                       */
+/* Copyright 2020, 2026 NXP                                                 */
 /*                                                                          */
 /* License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025 */
 /*--------------------------------------------------------------------------*/
@@ -21,6 +21,8 @@ extern "C"
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
+#include <assert.h>
+
 #include "hse_interface.h"
 #include "hse_keys_allocator.h"
 
@@ -283,6 +285,10 @@ hseSrvResponse_t HKF_FreeKeySlot(hseKeyHandle_t *keyHandle)
         goto exit;
     }
 
+    /* CERT ARR30-C & STR31-C: Validate indices before array access */
+    assert(catId < 3U);
+    assert(groupId < HSE_TOTAL_NUM_OF_KEY_GROUPS);
+
     pKeySlot = &allocatorCtx.ctx[catId].group[groupId].key[slotId];
 
     if(HSE_KEY_IS_NOT_EMPTY == pKeySlot->keyEmpty)
@@ -309,6 +315,10 @@ hseSrvResponse_t HKF_IsKeyHandleAllocated(hseKeyHandle_t keyHandle)
         goto exit;
     }
 
+    /* CERT ARR30-C & STR31-C: Validate indices before array access */
+    assert(catId < 3U);
+    assert(groupId < HSE_TOTAL_NUM_OF_KEY_GROUPS);
+
     pKeySlot = &allocatorCtx.ctx[catId].group[groupId].key[slotId];
     if(HSE_KEY_IS_NOT_EMPTY == pKeySlot->keyEmpty)
     {
@@ -325,6 +335,10 @@ hseSrvResponse_t HKF_MarkAsAllocated(hseKeyHandle_t keyHandle)
     hseKeyCatalogId_t catId  = GET_CATALOG_ID(keyHandle);
     hseKeyGroupIdx_t groupId = GET_GROUP_IDX(keyHandle);
     hseKeySlotIdx_t slotId   = GET_SLOT_IDX(keyHandle);
+
+    /* CERT ARR30-C & STR31-C: Validate indices before array access */
+    assert(catId < 3U);
+    assert(groupId < HSE_TOTAL_NUM_OF_KEY_GROUPS);
 
     keySlotContext_t * pKeySlot = &allocatorCtx.ctx[catId].group[groupId].key[slotId];
 

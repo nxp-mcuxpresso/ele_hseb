@@ -8,7 +8,7 @@
 */
 /*==================================================================================================
 *
-*   Copyright 2019-2021 NXP
+*   Copyright 2019-2021, 2026 NXP
 *
 *   License: LA_OPT_Online Code Hosting NXP_Software_License - v1.4 May 2025
 ==================================================================================================*/
@@ -20,6 +20,8 @@ extern "C"
 /*==================================================================================================
  *                                        INCLUDE FILES
  ==================================================================================================*/
+
+#include <assert.h>
 
 #include "string.h"
 #include "global_defs.h"
@@ -169,12 +171,18 @@ hseSrvResponse_t HSE_ImportKey
     pHseSrvDesc->srvId                      = HSE_SRV_ID_IMPORT_KEY;
     pImportKeyReq->targetKeyHandle          = targetKeyHandle;
     pImportKeyReq->pKeyInfo                 = PTR_TO_HOST_ADDR(pKeyInfo);
+    /* INT31-C: Validate before narrowing conversion */
+    assert(keyLen0 <= UINT16_MAX);
     pImportKeyReq->pKey[0]                  = PTR_TO_HOST_ADDR(pKey0);
-    pImportKeyReq->keyLen[0]                = keyLen0;
+    pImportKeyReq->keyLen[0]                = (uint16_t)keyLen0;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(keyLen1 <= UINT16_MAX);
     pImportKeyReq->pKey[1]                  = PTR_TO_HOST_ADDR(pKey1);
-    pImportKeyReq->keyLen[1]                = keyLen1;
+    pImportKeyReq->keyLen[1]                = (uint16_t)keyLen1;
+    /* INT31-C: Validate before narrowing conversion */
+    assert(keyLen2 <= UINT16_MAX);
     pImportKeyReq->pKey[2]                  = PTR_TO_HOST_ADDR(pKey2);
-    pImportKeyReq->keyLen[2]                = keyLen2;
+    pImportKeyReq->keyLen[2]                = (uint16_t)keyLen2;
     #if defined(HSE_KEY_FORMAT_ECC_PUB_RAW)
     pImportKeyReq->keyFormat.eccKeyFormat   = eccKeyFormat;
     #endif
@@ -202,11 +210,15 @@ hseSrvResponse_t HSE_ImportSymKey
     uint32_t len
 )
 {
+    uint32_t tempBitLen = BYTES_TO_BITS(len);
+    /* INT31-C: Validate before narrowing conversion */
+    assert(tempBitLen <= UINT16_MAX);
+
     /* Declare the information about the key to be imported */
     hseKeyInfo_t keyInfo = {
         .keyType = type,                    /* Will import a symmetric key (AES/HMAC) */
         .keyFlags = flags,                  /* Usage flags for this key (e.g. ENCRYPT/DECRYPT/SIGN/VERIFY/PROVISION/DERIVE) */
-        .keyBitLen = BYTES_TO_BITS(len),    /* The length in bits (for AES - 128/192/256; for HMAC any value in the
+        .keyBitLen = (uint16_t)tempBitLen,  /* The length in bits (for AES - 128/192/256; for HMAC any value in the
                                                 [HSE_MIN_HMAC_KEY_BITS_LEN..HSE_MAX_HMAC_KEY_BITS_LEN] boundaries) */
         .keyCounter = 0UL,                  /* Relevant only for NVM keys - must be > than previous */
         .smrFlags = 0UL,                    /* Not used here - default value */
@@ -277,6 +289,9 @@ hseSrvResponse_t HSE_ImportRsaKey
     /* pD may be NULL (when importing an RSA_PUB type) */
     uint16_t dLen = (NULL != pD) ? modLen : 0U;
 
+    /* INT31-C: Validate before narrowing conversion */
+    assert(eLen <= UINT8_MAX);
+
     /* Declare the information about the key to be imported */
     hseKeyInfo_t keyInfo = {
         .keyType = type,                                            /* Will import a RSA key (public / pair) */
@@ -284,7 +299,7 @@ hseSrvResponse_t HSE_ImportRsaKey
         .keyBitLen =  BYTES_TO_BITS(modLen),                        /* Length of modulus in bits */
         .keyCounter = 0UL,                                          /* Relevant only for NVM keys - must be > than previous */
         .smrFlags = 0UL,                                            /* Not used here - default value */
-        .specific.pubExponentSize = eLen,                           /* Specific for RSA key - size of public exponent */
+        .specific.pubExponentSize = (uint8_t)eLen,                  /* Specific for RSA key - size of public exponent */
     };
 
     return HSE_ImportKey(MU0, handle, &keyInfo, pN, modLen, pE, eLen, pD, dLen
